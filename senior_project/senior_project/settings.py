@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'address'
 ]
-AUTH_USER_MODEL = "api.User"
+AUTH_USER_MODEL = "api.AppUser"
 
 GOOGLE_API_KEY = 'AIzaSyBQRs6DeE6XY1kUvlfAMgn0-QLD9n0Zf3Q'
 
