@@ -7,7 +7,7 @@ class RestaurantSerializer(serializers.ModelSerializer):
     address = serializers.StringRelatedField(many=False)
     class Meta:
         model = Restaurant
-        fields = ['name', 'address', 'website', 'yelp_page', 'phone_number']
+        fields = ['id', 'name', 'address', 'website', 'yelp_page', 'phone_number']
 
 class AppUserSerializer(serializers.ModelSerializer):
     class Meta:
