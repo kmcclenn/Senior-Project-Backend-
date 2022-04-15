@@ -24,4 +24,4 @@ def jwt_decode_token(token):
         raise Exception('Public key not found.')
 
     issuer = 'https://{}/'.format('dev-vlhevtjc.us.auth0.com')
-    return jwt.decode(token, public_key, audience='undefined', issuer=issuer, algorithms=['RS256'])
+    return jwt.decode(token, public_key, audience='https://waittimes/api', issuer=issuer, algorithms=['RS256'])
