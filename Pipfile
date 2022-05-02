@@ -8,12 +8,12 @@ django = "*"
 psycopg2 = "*"
 djangorestframework = "*"
 django-address = "*"
-python-decouple = "*"
 requests = "*"
 pyjwt = "*"
 cryptography = "*"
 django-cors-headers = "*"
 drf-jwt = "*"
+python-decouple = "*"
 
 [dev-packages]
 
