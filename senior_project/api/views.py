@@ -47,7 +47,7 @@ def average_wait_time(request, restaurant_id):
         else:
             most_recent_time = input.post_time
         
-        if ((most_recent_time - timezone.now).total_seconds() < farthest_history_where_wait_times_are_relevant_seconds):
+        if ((timezone.now() - most_recent_time).total_seconds() < farthest_history_where_wait_times_are_relevant_seconds):
             if input.wait_length is not None:
                 wait_lengths.append(input.wait_length)
             else:
