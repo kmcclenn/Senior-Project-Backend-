@@ -1,12 +1,13 @@
 from django.contrib import admin
 from address.models import AddressField
 from address.forms import AddressWidget
-from .models import Restaurant, AppUser
+from .models import Restaurant, AppUser, InputtedWaittimes
 from django import forms
 from address.models import Address
 
 # Register your models here.
 admin.site.register(AppUser)
+admin.site.register(InputtedWaittimes)
 
 class RestaurantModel(Restaurant):
 

@@ -1,8 +1,8 @@
 from django.shortcuts import render
-from .models import Restaurant, AppUser
+from .models import InputtedWaittimes, Restaurant, AppUser
 from address.models import Address
 from rest_framework import viewsets, permissions
-from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializer
+from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializer, InputtedWaittimesSerializer
 # from functools import wraps
 # import jwt
 from django.http import JsonResponse
@@ -33,6 +33,11 @@ class RestaurantViewSet(viewsets.ModelViewSet):
 class AppUserViewSet(viewsets.ModelViewSet):
     queryset = AppUser.objects.all()
     serializer_class = AppUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class InputtedWaittimesViewSet(viewsets.ModelViewSet):
+    queryset = InputtedWaittimes.objects.all()
+    serializer_class = InputtedWaittimesSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 class AddressViewSet(viewsets.ModelViewSet):

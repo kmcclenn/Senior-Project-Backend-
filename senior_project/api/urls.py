@@ -7,6 +7,7 @@ router = routers.DefaultRouter()
 router.register(r'restaurant', views.RestaurantViewSet)
 router.register(r'appuser', views.AppUserViewSet)
 router.register(r'address', views.AddressViewSet)
+router.register(r'inputtedwaittimes', views.InputtedWaittimes)
 
 urlpatterns = [
     path("", include(router.urls)),
