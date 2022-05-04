@@ -4,7 +4,7 @@ from .models import InputtedWaittime, Restaurant, AppUser
 from address.models import Address
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes
-
+from django.utils import timezone
 from rest_framework.response import Response
 from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializer, InputtedWaittimeSerializer
 # from functools import wraps
@@ -33,11 +33,33 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 # FBVs - these will do the calcuations
 @api_view(['GET'])
 def average_wait_time(request, restaurant_id):
+    farthest_history_where_wait_times_are_relevant = 30 # minutes
+    farthest_history_where_wait_times_are_relevant_seconds = farthest_history_where_wait_times_are_relevant*60
     restaurant = Restaurant.objects.get(id=restaurant_id)
     ##restaurant_serializer = RestaurantSerializer(restaurant)
     restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=restaurant)
-    restaurant_wait_time_inputs_serializer = InputtedWaittimeSerializer(restaurant_wait_time_inputs, many=True)
-    return Response({'message': restaurant_wait_time_inputs_serializer.data})
+
+    wait_lengths = []
+    average_wait_times = None
+    for input in restaurant_wait_time_inputs:
+        if input.arrival_time is not None:
+            most_recent_time = input.arrival_time
+        else:
+            most_recent_time = input.post_time
+        
+        if ((most_recent_time - timezone.now).total_seconds() < farthest_history_where_wait_times_are_relevant_seconds):
+            if input.wait_length is not None:
+                wait_lengths.append(input.wait_length)
+            else:
+                wait_length = input.seated_time - input.arrival_time
+                wait_length_in_s = wait_length.total_seconds()
+                wait_lengths.append(wait_length_in_s)
+
+        average_wait_times = sum(wait_lengths)/len(wait_lengths)
+    
+
+    ##restaurant_wait_time_inputs_serializer = InputtedWaittimeSerializer(restaurant_wait_time_inputs, many=True)
+    return Response({'average_waittime_within_30_minutes': average_wait_times})
    
 
 # CBVs - these just return the basic data from the models
