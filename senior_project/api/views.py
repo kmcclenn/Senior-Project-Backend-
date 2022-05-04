@@ -16,10 +16,12 @@ from rest_framework.authtoken.models import Token
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
+    for user in AppUser.objects.all():
+        Token.objects.get_or_create(user=user)# if user doesn't have token, create token.
 
 
-for user in AppUser.objects.all():
-    Token.objects.get_or_create(user=user)
+# for user in AppUser.objects.all():
+#     Token.objects.get_or_create(user=user)
 
 
 # Create your views here.
