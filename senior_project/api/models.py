@@ -29,7 +29,7 @@ class Restaurant(models.Model):
 
 
 
-class InputtedWaittimes(models.Model):
+class InputtedWaittime(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="waittimes")
     wait_length = models.IntegerField(null=True, blank=True) # either have direct wait length or sitting time minus arrival time
     reporting_user = models.ForeignKey(AppUser, on_delete=models.SET_NULL, null=True, related_name="inputs")

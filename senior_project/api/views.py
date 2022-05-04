@@ -1,8 +1,12 @@
+
 from django.shortcuts import render
-from .models import InputtedWaittimes, Restaurant, AppUser
+from .models import InputtedWaittime, Restaurant, AppUser
 from address.models import Address
 from rest_framework import viewsets, permissions
-from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializer, InputtedWaittimesSerializer
+from rest_framework.decorators import api_view, permission_classes
+
+from rest_framework.response import Response
+from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializer, InputtedWaittimeSerializer
 # from functools import wraps
 # import jwt
 from django.http import JsonResponse
@@ -25,6 +29,18 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 
 
 # Create your views here.
+
+# FBVs - these will do the calcuations
+@api_view(['GET'])
+def average_wait_time(request, restaurant_id):
+    restaurant = Restaurant.objects.get(id=restaurant_id)
+    ##restaurant_serializer = RestaurantSerializer(restaurant)
+    restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=restaurant)
+    restaurant_wait_time_inputs_serializer = InputtedWaittimeSerializer(restaurant_wait_time_inputs, many=True)
+    return Response({'message': restaurant_wait_time_inputs_serializer.data})
+   
+
+# CBVs - these just return the basic data from the models
 class RestaurantViewSet(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
@@ -35,9 +51,9 @@ class AppUserViewSet(viewsets.ModelViewSet):
     serializer_class = AppUserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-class InputtedWaittimesViewSet(viewsets.ModelViewSet):
-    queryset = InputtedWaittimes.objects.all()
-    serializer_class = InputtedWaittimesSerializer
+class InputtedWaittimeViewSet(viewsets.ModelViewSet):
+    queryset = InputtedWaittime.objects.all()
+    serializer_class = InputtedWaittimeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
 class AddressViewSet(viewsets.ModelViewSet):

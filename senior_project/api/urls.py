@@ -7,10 +7,11 @@ router = routers.DefaultRouter()
 router.register(r'restaurant', views.RestaurantViewSet)
 router.register(r'appuser', views.AppUserViewSet)
 router.register(r'address', views.AddressViewSet)
-router.register(r'inputtedwaittimes', views.InputtedWaittimes)
+router.register(r'inputtedwaittimes', views.InputtedWaittimeViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("average_time/<int:restaurant_id>", views.average_wait_time, name = "average_wait_time"),
     path('api-auth/', include('rest_framework.urls')),
     path('api-token-auth/', authviews.obtain_auth_token)
 ]
