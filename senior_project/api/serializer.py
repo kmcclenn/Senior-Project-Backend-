@@ -12,7 +12,7 @@ class RestaurantSerializer(serializers.ModelSerializer):
 class AppUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppUser
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'credibility_rating', 'points']
 
 class AddressSerializer(serializers.ModelSerializer):
     locality = serializers.StringRelatedField(many=False)
