@@ -3,7 +3,7 @@ from django.shortcuts import render
 from .models import InputtedWaittime, Restaurant, AppUser
 from address.models import Address
 from rest_framework import viewsets, permissions
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from django.utils import timezone
 from rest_framework.response import Response
 from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializer, InputtedWaittimeSerializer
@@ -11,9 +11,10 @@ from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializ
 # import jwt
 from django.http import JsonResponse
 from django.conf import settings
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
+from . import constants
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -23,18 +24,35 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     for user in AppUser.objects.all():
         Token.objects.get_or_create(user=user)# if user doesn't have token, create token.
 
+@receiver(pre_save, sender=InputtedWaittime)
+def add_accuracy_and_points(sender, instance=None, **kwargs):
 
+
+    input_time = instance.wait_length
+    average_wait_times = get_average_wait_time(instance.restaurant.id)
+    if not average_wait_times:
+        accuracy = 1
+    else:
+        accuracy = 1 - (abs(average_wait_times - input_time)/average_wait_times)
+        if accuracy < 0:
+            accuracy = 0
+
+    instance.accuracy = accuracy
+
+    instance.points = constants.point_scale * accuracy
+    ## instance.save() - not sure if needed
+
+    #get instance wait time
+    # use average wait time function and/or API to get average wait time
+    # compare the two to get credibility
+    # use credibility and multiply it by a certain factor(10) to get points
 # for user in AppUser.objects.all():
 #     Token.objects.get_or_create(user=user)
 
 
 # Create your views here.
-
-# FBVs - these will do the calcuations
-@api_view(['GET'])
-def average_wait_time(request, restaurant_id):
-    farthest_history_where_wait_times_are_relevant = 30 # minutes
-    farthest_history_where_wait_times_are_relevant_seconds = farthest_history_where_wait_times_are_relevant*60
+def get_average_wait_time(restaurant_id): ## need to make weighted average
+    relevant_history_seconds = constants.relevant_history*60
     restaurant = Restaurant.objects.get(id=restaurant_id)
     ##restaurant_serializer = RestaurantSerializer(restaurant)
     restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=restaurant)
@@ -47,16 +65,34 @@ def average_wait_time(request, restaurant_id):
         else:
             most_recent_time = input.post_time
         
-        if ((timezone.now() - most_recent_time).total_seconds() < farthest_history_where_wait_times_are_relevant_seconds):
+        if ((timezone.now() - most_recent_time).total_seconds() < relevant_history_seconds):
+            reporting_user = AppUser.objects.get(id = input.reporting_user.id)
+
+            accuracies = []
+            for report in InputtedWaittime.objects.filter(reporting_user = reporting_user):
+                accuracies.append(report.accuracy)
+            credibility = sum(accuracies)/len(accuracies)
+
             if input.wait_length is not None:
-                wait_lengths.append(input.wait_length)
+                wait_lengths.append(input.wait_length * 60 * credibility)
             else:
                 wait_length = input.seated_time - input.arrival_time
                 wait_length_in_s = wait_length.total_seconds()
-                wait_lengths.append(wait_length_in_s)
+                wait_lengths.append(wait_length_in_s * credibility)
 
-        average_wait_times = sum(wait_lengths)/len(wait_lengths)
+    if len(average_wait_times) == 0:
+        return None
+    average_wait_times = sum(wait_lengths)/len(wait_lengths)
+    return average_wait_times / 60 # to put it back in minutes
     
+     # copy function from below
+# FBVs - these will do the calcuations
+@api_view(['GET'])
+def average_wait_time(request, restaurant_id):
+    
+    average_wait_times = get_average_wait_time(restaurant_id=restaurant_id)
+    if not average_wait_times:
+        return Response({'error': 'not enough data to generate average'})
 
     ##restaurant_wait_time_inputs_serializer = InputtedWaittimeSerializer(restaurant_wait_time_inputs, many=True)
     return Response({'average_waittime_within_30_minutes': average_wait_times})
@@ -77,6 +113,11 @@ class InputtedWaittimeViewSet(viewsets.ModelViewSet):
     queryset = InputtedWaittime.objects.all()
     serializer_class = InputtedWaittimeSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    # @action(detail=True, methods=['post'])
+    # def set_waittime(self, request, pk=None):
+
+
 
 class AddressViewSet(viewsets.ModelViewSet):
     queryset = Address.objects.all()

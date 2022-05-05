@@ -32,11 +32,11 @@ class Restaurant(models.Model):
 
 class InputtedWaittime(models.Model):
     restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="waittimes")
-    # in seconds:
+    # in minutes:
     wait_length = models.IntegerField(null=True, blank=True) # either have direct wait length or sitting time minus arrival time
     reporting_user = models.ForeignKey(AppUser, on_delete=models.SET_NULL, null=True, related_name="inputs")
-    accuracy = models.FloatField()
-    point_value = models.IntegerField()  
+    accuracy = models.FloatField(default = 1)
+    point_value = models.IntegerField(default = 10)  
     post_time = models.DateTimeField(auto_now_add=True)
     arrival_time = models.DateTimeField(null=True, blank=True, default = timezone.now)
     seated_time = models.DateTimeField(null=True, blank=True)
