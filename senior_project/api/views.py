@@ -14,7 +14,7 @@ from django.conf import settings
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
-from . import constants
+from . import utils
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -29,7 +29,7 @@ def add_accuracy_and_points(sender, instance=None, **kwargs):
 
 
     input_time = instance.wait_length
-    average_wait_times = get_average_wait_time(instance.restaurant.id)
+    average_wait_times = utils.get_average_wait_time(instance.restaurant.id)
     if not average_wait_times:
         accuracy = 1
     else:
@@ -39,7 +39,7 @@ def add_accuracy_and_points(sender, instance=None, **kwargs):
 
     instance.accuracy = accuracy
 
-    instance.points = constants.point_scale * accuracy
+    instance.points = utils.point_scale * accuracy
     ## instance.save() - not sure if needed
 
     #get instance wait time
@@ -51,46 +51,14 @@ def add_accuracy_and_points(sender, instance=None, **kwargs):
 
 
 # Create your views here.
-def get_average_wait_time(restaurant_id): ## need to make weighted average
-    relevant_history_seconds = constants.relevant_history*60
-    restaurant = Restaurant.objects.get(id=restaurant_id)
-    ##restaurant_serializer = RestaurantSerializer(restaurant)
-    restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=restaurant)
 
-    wait_lengths = []
-    average_wait_times = None
-    for input in restaurant_wait_time_inputs:
-        if input.arrival_time is not None:
-            most_recent_time = input.arrival_time
-        else:
-            most_recent_time = input.post_time
-        
-        if ((timezone.now() - most_recent_time).total_seconds() < relevant_history_seconds):
-            reporting_user = AppUser.objects.get(id = input.reporting_user.id)
-
-            accuracies = []
-            for report in InputtedWaittime.objects.filter(reporting_user = reporting_user):
-                accuracies.append(report.accuracy)
-            credibility = sum(accuracies)/len(accuracies)
-
-            if input.wait_length is not None:
-                wait_lengths.append(input.wait_length * 60 * credibility)
-            else:
-                wait_length = input.seated_time - input.arrival_time
-                wait_length_in_s = wait_length.total_seconds()
-                wait_lengths.append(wait_length_in_s * credibility)
-
-    if len(average_wait_times) == 0:
-        return None
-    average_wait_times = sum(wait_lengths)/len(wait_lengths)
-    return average_wait_times / 60 # to put it back in minutes
     
-     # copy function from below
+     
 # FBVs - these will do the calcuations
 @api_view(['GET'])
 def average_wait_time(request, restaurant_id):
     
-    average_wait_times = get_average_wait_time(restaurant_id=restaurant_id)
+    average_wait_times = utils.get_average_wait_time(restaurant_id=restaurant_id)
     if not average_wait_times:
         return Response({'error': 'not enough data to generate average'})
 
@@ -102,17 +70,17 @@ def average_wait_time(request, restaurant_id):
 class RestaurantViewSet(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [utils.IsAdminOrReadOnly]
 
 class AppUserViewSet(viewsets.ModelViewSet):
     queryset = AppUser.objects.all()
     serializer_class = AppUserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [utils.IsOwnerOrReadOnly]
 
 class InputtedWaittimeViewSet(viewsets.ModelViewSet):
     queryset = InputtedWaittime.objects.all()
     serializer_class = InputtedWaittimeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     # @action(detail=True, methods=['post'])
     # def set_waittime(self, request, pk=None):
@@ -122,7 +90,7 @@ class InputtedWaittimeViewSet(viewsets.ModelViewSet):
 class AddressViewSet(viewsets.ModelViewSet):
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
 
 # def get_token_auth_header(request):
