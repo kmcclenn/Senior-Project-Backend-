@@ -40,6 +40,7 @@ def add_accuracy_and_points(sender, instance=None, **kwargs):
     instance.accuracy = accuracy
 
     instance.points = utils.point_scale * accuracy
+
     ## instance.save() - not sure if needed
 
     #get instance wait time
@@ -56,14 +57,20 @@ def add_accuracy_and_points(sender, instance=None, **kwargs):
      
 # FBVs - these will do the calcuations
 @api_view(['GET'])
+def return_credibility(request, user_id):
+    credibility = utils.get_credibility(user_id)
+    return Response({f'user {user_id} credibility': credibility})
+
+@api_view(['GET'])
 def average_wait_time(request, restaurant_id):
     
-    average_wait_times = utils.get_average_wait_time(restaurant_id=restaurant_id)
-    if not average_wait_times:
+    average_wait_time = utils.get_average_wait_time(restaurant_id=restaurant_id)
+    if not average_wait_time:
         return Response({'error': 'not enough data to generate average'})
 
+    return Response({f'average_waittime_within_past_{utils.relevant_history}_minutes': average_wait_time})
     ##restaurant_wait_time_inputs_serializer = InputtedWaittimeSerializer(restaurant_wait_time_inputs, many=True)
-    return Response({'average_waittime_within_30_minutes': average_wait_times})
+    # return if list: return Response({'average_waittime_within_30_minutes': ' '.join(str(e) for e in average_wait_times)})
    
 
 # CBVs - these just return the basic data from the models

@@ -12,6 +12,7 @@ router.register(r'inputtedwaittimes', views.InputtedWaittimeViewSet)
 urlpatterns = [
     path("", include(router.urls)),
     path("average_time/<int:restaurant_id>", views.average_wait_time, name = "average_wait_time"),
+    path("get_credibility/<int:user_id>", views.return_credibility, name="get_credibility"),
     path('api-auth/', include('rest_framework.urls')),
     path('api-token-auth/', authviews.obtain_auth_token)
 ]

@@ -26,7 +26,15 @@ class IsOwnerOrReadOnly():
         # Instance must have an attribute named `owner`.
         return obj == request.user
 
-    
+def get_credibility(user_id):
+    reporting_user = AppUser.objects.get(id = user_id)
+
+    accuracies = []
+    for report in InputtedWaittime.objects.filter(reporting_user = reporting_user):
+        accuracies.append(report.accuracy)
+    credibility = sum(accuracies)/len(accuracies)
+    return credibility
+
 def get_average_wait_time(restaurant_id): ## need to make weighted average
     relevant_history_seconds = relevant_history*60
     restaurant = Restaurant.objects.get(id=restaurant_id)
@@ -42,21 +50,27 @@ def get_average_wait_time(restaurant_id): ## need to make weighted average
             most_recent_time = input.post_time
         
         if ((timezone.now() - most_recent_time).total_seconds() < relevant_history_seconds):
-            reporting_user = AppUser.objects.get(id = input.reporting_user.id)
+            
 
-            accuracies = []
-            for report in InputtedWaittime.objects.filter(reporting_user = reporting_user):
-                accuracies.append(report.accuracy)
-            credibility = sum(accuracies)/len(accuracies)
+            credibility = get_credibility(input.reporting_user.id)
 
             if input.wait_length is not None:
-                wait_lengths.append(input.wait_length * 60 * credibility)
+                wait_lengths.append([input.wait_length * 60, credibility])
             else:
                 wait_length = input.seated_time - input.arrival_time
                 wait_length_in_s = wait_length.total_seconds()
-                wait_lengths.append(wait_length_in_s * credibility)
+                wait_lengths.append([wait_length_in_s, credibility])
 
-    if len(average_wait_times) == 0:
+    if len(wait_lengths) == 0:
         return None
-    average_wait_times = sum(wait_lengths)/len(wait_lengths)
+
+    total_credibility = 0
+    for pair in wait_lengths:
+        total_credibility += pair[1]
+
+    average_wait_times = 0
+    for pair in wait_lengths:
+        weight = pair[1]/total_credibility
+        average_wait_times += (weight * pair[0])
+    
     return average_wait_times / 60 # to put it back in minutes
