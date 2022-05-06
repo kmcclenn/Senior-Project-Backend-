@@ -4,6 +4,7 @@ from django.utils import timezone
 
 relevant_history = 30 # minutes
 point_scale = 10
+time_constant = 0.17
 
 class IsAdminOrReadOnly(permissions.BasePermission):
 
@@ -32,7 +33,10 @@ def get_credibility(user_id):
     accuracies = []
     for report in InputtedWaittime.objects.filter(reporting_user = reporting_user):
         accuracies.append(report.accuracy)
-    credibility = sum(accuracies)/len(accuracies)
+    if len(accuracies) == 0:
+        credibility = 1
+    else:
+        credibility = sum(accuracies)/len(accuracies)
     return credibility
 
 def get_average_wait_time(restaurant_id): ## need to make weighted average
@@ -55,11 +59,11 @@ def get_average_wait_time(restaurant_id): ## need to make weighted average
             credibility = get_credibility(input.reporting_user.id)
 
             if input.wait_length is not None:
-                wait_lengths.append([input.wait_length * 60, credibility])
+                wait_lengths.append([float(input.wait_length) * 60, credibility])
             else:
                 wait_length = input.seated_time - input.arrival_time
                 wait_length_in_s = wait_length.total_seconds()
-                wait_lengths.append([wait_length_in_s, credibility])
+                wait_lengths.append([float(wait_length_in_s), credibility])
 
     if len(wait_lengths) == 0:
         return None
@@ -73,4 +77,4 @@ def get_average_wait_time(restaurant_id): ## need to make weighted average
         weight = pair[1]/total_credibility
         average_wait_times += (weight * pair[0])
     
-    return average_wait_times / 60 # to put it back in minutes
+    return [average_wait_times / 60, wait_lengths] # to put it back in minutes
