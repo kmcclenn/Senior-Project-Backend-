@@ -15,6 +15,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from . import utils
+from rest_framework.authtoken.views import ObtainAuthToken
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
@@ -24,9 +25,17 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     for user in AppUser.objects.all():
         Token.objects.get_or_create(user=user)# if user doesn't have token, create token.
 
+# @receiver(pre_save, sender = InputtedWaittime)
+# def add_foreign_keys(sender, instance=None, **kwargs):
+#     restaurant = Restaurant.objects.get(pk=instance.restaurant.id)
+#     instance.restaurant = restaurant
+
+
 @receiver(pre_save, sender=InputtedWaittime)
 def add_accuracy_and_points(sender, instance=None, **kwargs):
     if instance.id is None: # making sure its a new save
+
+        #restaurant = Restaurant.objects.get(pk=instance.restaurant)
         restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=instance.restaurant)
         most_recent_times = []
         for input in restaurant_wait_time_inputs:
@@ -135,6 +144,19 @@ class AddressViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.AllowAny]
 
 
+
+class CustomAuthToken(ObtainAuthToken):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': str(user.pk),
+        })
 # def get_token_auth_header(request):
 #     """Obtains the Access Token from the Authorization Header
 #     """
