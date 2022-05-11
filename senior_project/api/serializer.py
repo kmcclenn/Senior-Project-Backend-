@@ -10,8 +10,8 @@ class RestaurantSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'address', 'website', 'yelp_page', 'phone_number', 'user_who_created', 'is_active', 'created_time', 'logo_url']
 
 class InputtedWaittimeSerializer(serializers.ModelSerializer):
-    #restaurant = serializers.PrimaryKeyRelatedField(many=False, queryset=Restaurant.objects.all(), read_only = False, default=None)
-    #reporting_user = serializers.PrimaryKeyRelatedField(many=False, queryset=AppUser.objects.all(), read_only = False, default=None)
+    restaurant = serializers.PrimaryKeyRelatedField(many=False, queryset=Restaurant.objects.all(), default=None)
+    reporting_user = serializers.PrimaryKeyRelatedField(many=False, queryset=AppUser.objects.all(), default=None)
     class Meta:
         model = InputtedWaittime
         fields = ['id', 'restaurant', 'wait_length', 'reporting_user', 'accuracy', 'point_value', 'post_time', 'arrival_time', 'seated_time']
@@ -19,14 +19,24 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
         read_only_fields = ('id','accuracy','point_value','post_time')
 
     # def to_representation(self, value):
-    #     self.fields['restaurant'] =  RestaurantSerializer(read_only=True)
-    #     self.fields['reporting_user'] = AppUserSerializer(read_only=True)
+    #     self.fields['restaurant'] =  RestaurantSerializer()
+    #     self.fields['reporting_user'] = AppUserSerializer()
     #     return super().to_representation(value)
 
 class AppUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppUser
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def save(self, validated_data):
+        user = AppUser(
+            email=validated_data['email'],
+            username=validated_data['username']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
 
 class AddressSerializer(serializers.ModelSerializer):
     locality = serializers.StringRelatedField(many=False)

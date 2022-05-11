@@ -14,5 +14,6 @@ urlpatterns = [
     path("average_time/<int:restaurant_id>", views.average_wait_time, name = "average_wait_time"),
     path("get_credibility/<int:user_id>", views.return_credibility, name="get_credibility"),
     path('api-auth/', include('rest_framework.urls')),
+    path('user_points', views.user_points, name="user_points"),
     path('api-token-auth/', views.CustomAuthToken.as_view())
 ]

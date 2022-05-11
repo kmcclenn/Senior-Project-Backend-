@@ -1,3 +1,4 @@
+
 from rest_framework import permissions
 from .models import Restaurant, InputtedWaittime, AppUser
 from django.utils import timezone
@@ -24,7 +25,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return obj.id == request.user.id
+        return obj.id == request.user.id ## if both are none, then it works too - so works when creating new user.
 
 def get_credibility(user_id):
     reporting_user = AppUser.objects.get(id = user_id)
@@ -59,10 +60,12 @@ def get_average_wait_time(restaurant_id): ## need to make weighted average
 
             if input.wait_length is not None:
                 wait_lengths.append([float(input.wait_length) * 60, credibility])
+            # elif input.seated_time is not None and input.arrival_time is not None:
+            #     wait_length = input.seated_time - input.arrival_time
+            #     wait_length_in_s = wait_length.total_seconds()
+            #     wait_lengths.append([float(wait_length_in_s), credibility])
             else:
-                wait_length = input.seated_time - input.arrival_time
-                wait_length_in_s = wait_length.total_seconds()
-                wait_lengths.append([float(wait_length_in_s), credibility])
+                return None
 
     if len(wait_lengths) == 0:
         return None

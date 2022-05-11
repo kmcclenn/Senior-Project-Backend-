@@ -1,6 +1,7 @@
 
 from django.shortcuts import render
-from .models import InputtedWaittime, Restaurant, AppUser
+#from api.models import InputtedWaittime, Restaurant, AppUser
+from . import models
 from address.models import Address
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes, action
@@ -22,7 +23,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 def create_auth_token(sender, instance=None, created=False, **kwargs):
     if created:
         Token.objects.create(user=instance)
-    for user in AppUser.objects.all():
+    for user in models.AppUser.objects.all():
         Token.objects.get_or_create(user=user)# if user doesn't have token, create token.
 
 # @receiver(pre_save, sender = InputtedWaittime)
@@ -30,13 +31,19 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
 #     restaurant = Restaurant.objects.get(pk=instance.restaurant.id)
 #     instance.restaurant = restaurant
 
-
-@receiver(pre_save, sender=InputtedWaittime)
-def add_accuracy_and_points(sender, instance=None, **kwargs):
+@receiver(pre_save, sender=models.InputtedWaittime)
+def add_accuracy_and_points_and_waitlength(sender, instance=None, **kwargs):
+    print(vars(instance))
     if instance.id is None: # making sure its a new save
-
-        #restaurant = Restaurant.objects.get(pk=instance.restaurant)
-        restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=instance.restaurant)
+        
+        if instance.wait_length is None:
+            try:
+                instance.wait_length = (instance.seated_time - instance.arrival_time).total_seconds() / 60
+            except TypeError:
+                instance.wait_length = 0
+        
+        restaurant = models.Restaurant.objects.get(pk=instance.restaurant_id)
+        restaurant_wait_time_inputs = models.InputtedWaittime.objects.filter(restaurant=restaurant)
         most_recent_times = []
         for input in restaurant_wait_time_inputs:
             if input.arrival_time is not None:
@@ -69,7 +76,10 @@ def add_accuracy_and_points(sender, instance=None, **kwargs):
         if not average_wait_times:
             accuracy = 1
         else:
-            accuracy = 1 - (abs(average_wait_times[0] - input_time)/average_wait_times[0])
+            if average_wait_times[0] == 0:
+                accuracy = input_time/10 if input_time < 10 else 0
+            else:
+                accuracy = 1 - (abs(average_wait_times[0] - input_time)/average_wait_times[0])
             accuracy += time_factor
             if accuracy < 0:
                 accuracy = 0
@@ -96,9 +106,24 @@ def add_accuracy_and_points(sender, instance=None, **kwargs):
 # FBVs - these will do the calcuations
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
+def user_points(request):
+    active_users = models.AppUser.objects.filter(is_active = True)
+    user_and_points = []
+    for user in active_users:
+        reported_wts = models.InputtedWaittime.objects.filter(reporting_user = user)
+        total_points = 0
+        for wt in reported_wts:
+            total_points += wt.point_value
+        user_and_points.append({'id': user.id, 'points': total_points})
+    if len(user_and_points) != 0:
+        user_and_points = sorted(user_and_points, reverse = True, key=lambda item: item['points'])
+    return Response(user_and_points)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
 def return_credibility(request, user_id):
     credibility = utils.get_credibility(user_id)
-    return Response({f'user {user_id} credibility': credibility})
+    return Response({'id': user_id, 'credibility': credibility})
 
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
@@ -119,17 +144,21 @@ def average_wait_time(request, restaurant_id):
 
 # CBVs - these just return the basic data from the models
 class RestaurantViewSet(viewsets.ModelViewSet):
-    queryset = Restaurant.objects.all()
+    queryset = models.Restaurant.objects.all()
     serializer_class = RestaurantSerializer
     permission_classes = [utils.IsAdminOrReadOnly]
 
 class AppUserViewSet(viewsets.ModelViewSet):
-    queryset = AppUser.objects.all()
+    queryset = models.AppUser.objects.all()
     serializer_class = AppUserSerializer
     permission_classes = [utils.IsOwnerOrReadOnly]
 
+    def perform_create(self, serializer):
+        if serializer.is_valid():
+            serializer.save(serializer.validated_data)
+
 class InputtedWaittimeViewSet(viewsets.ModelViewSet):
-    queryset = InputtedWaittime.objects.all()
+    queryset = models.InputtedWaittime.objects.all()
     serializer_class = InputtedWaittimeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
