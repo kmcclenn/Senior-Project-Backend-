@@ -1,13 +1,31 @@
 from ctypes import addressof
+from wsgiref import validate
 from .models import Restaurant, AppUser, InputtedWaittime
-from address.models import Address
+from address.models import Address, Locality
 from rest_framework import serializers
 
 class RestaurantSerializer(serializers.ModelSerializer):
-    address = serializers.StringRelatedField(many=False)
+    address = serializers.SlugRelatedField(many=False, slug_field = 'raw', queryset=Address.objects.all())
+    user_who_created = serializers.PrimaryKeyRelatedField(many=False, queryset=AppUser.objects.all(), default=None)
     class Meta:
         model = Restaurant
         fields = ['id', 'name', 'address', 'website', 'yelp_page', 'phone_number', 'user_who_created', 'is_active', 'created_time', 'logo_url']
+
+    # def create(self, validated_data):
+    #     print(validated_data)
+    #     address = Address(
+    #         raw=validated_data['address'],
+    #     )
+    #     restaurant = Restaurant(
+    #         name = validated_data['name'],
+    #         address = address,
+    #         website = validated_data['website'],
+    #         yelp_page = validated_data['yelp_page'],
+    #         phone_number = validated_data['phone_number'],
+    #         user_who_created = validated_data['user_who_created']
+    #     )
+    #     restaurant.save()
+    #     return restaurant
 
 class InputtedWaittimeSerializer(serializers.ModelSerializer):
     restaurant = serializers.PrimaryKeyRelatedField(many=False, queryset=Restaurant.objects.all(), default=None)
@@ -27,9 +45,14 @@ class AppUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = AppUser
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
+        extra_kwargs = {
+            'password': {
+                'write_only': True,
+                'required': False
+                }
+            }
 
-    def save(self, validated_data):
+    def create(self, validated_data):
         user = AppUser(
             email=validated_data['email'],
             username=validated_data['username']

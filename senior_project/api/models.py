@@ -10,11 +10,11 @@ import datetime
 from django.utils import timezone
 
 class AppUser(AbstractUser):
-    pass
+    email = models.EmailField(unique=True)
 
 # Create your models here.
 class Restaurant(models.Model):
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=64, unique=True)
     address = AddressField(on_delete = models.CASCADE, default = None)
     website = models.URLField(blank=True, null=True)
     yelp_page = models.URLField(blank=True, null=True)
@@ -23,7 +23,8 @@ class Restaurant(models.Model):
     phone_number = models.CharField(validators = [phoneNumberRegex], max_length = 16, unique = True, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_time = models.DateTimeField(auto_now_add=True)
-    logo_url = models.URLField(blank=True, null=True) 
+    logo_url = models.URLField(blank=True, null=True)
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self): 
         return self.name

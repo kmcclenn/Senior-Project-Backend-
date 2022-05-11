@@ -1,8 +1,11 @@
 
+from itertools import count
+from re import L
 from django.shortcuts import render
 #from api.models import InputtedWaittime, Restaurant, AppUser
 from . import models
-from address.models import Address
+from address.models import Address, Locality, State, Country
+country = Country.objects.get(name="USA")
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes, action
 from django.utils import timezone
@@ -104,6 +107,22 @@ def add_accuracy_and_points_and_waitlength(sender, instance=None, **kwargs):
     
      
 # FBVs - these will do the calcuations
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticatedOrReadOnly])
+def address(request):
+    data = request.data
+    address, created = Address.objects.get_or_create(raw=data["raw"])
+    if created:
+        if data["city"] and data["zip"] and data["state"]:
+            state, state_created = State.objects.get_or_create(name=data["state"], country=country)
+            state.save()
+            locality, locality_created = Locality.objects.get_or_create(name=data["city"], postal_code=data["zip"])
+            locality.save()
+            address.locality = locality
+        address.save()
+    return Response({AddressSerializer(address).data})
+
+
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def user_points(request):
@@ -144,9 +163,9 @@ def average_wait_time(request, restaurant_id):
 
 # CBVs - these just return the basic data from the models
 class RestaurantViewSet(viewsets.ModelViewSet):
-    queryset = models.Restaurant.objects.all()
+    queryset = models.Restaurant.objects.filter(is_approved=True)
     serializer_class = RestaurantSerializer
-    permission_classes = [utils.IsAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class AppUserViewSet(viewsets.ModelViewSet):
     queryset = models.AppUser.objects.all()
@@ -155,7 +174,7 @@ class AppUserViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if serializer.is_valid():
-            serializer.save(serializer.validated_data)
+            serializer.create(serializer.validated_data)
 
 class InputtedWaittimeViewSet(viewsets.ModelViewSet):
     queryset = models.InputtedWaittime.objects.all()
@@ -167,10 +186,11 @@ class InputtedWaittimeViewSet(viewsets.ModelViewSet):
 
 
 
-class AddressViewSet(viewsets.ModelViewSet):
-    queryset = Address.objects.all()
-    serializer_class = AddressSerializer
-    permission_classes = [permissions.AllowAny]
+# class AddressViewSet(viewsets.ModelViewSet):
+#     queryset = Address.objects.all()
+#     serializer_class = AddressSerializer
+#     permission_classes = [permissions.AllowAny]
+
 
 
 
