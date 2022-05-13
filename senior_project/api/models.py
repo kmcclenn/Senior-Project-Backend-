@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from address.models import AddressField
+from address.models import AddressField, Address
 from django.core.validators import RegexValidator
 from django.conf import settings
 from django.db.models.signals import post_save
@@ -20,7 +20,7 @@ class Restaurant(models.Model):
     yelp_page = models.URLField(blank=True, null=True)
     user_who_created = models.ForeignKey(AppUser, on_delete=models.SET_NULL, null=True, related_name="restaurantscreated")
     phoneNumberRegex = RegexValidator(regex = r"^\+?1?\d{8,15}$")
-    phone_number = models.CharField(validators = [phoneNumberRegex], max_length = 16, unique = True, blank=True, null=True)
+    phone_number = models.CharField(validators = [phoneNumberRegex], max_length = 16, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_time = models.DateTimeField(auto_now_add=True)
     logo_url = models.URLField(blank=True, null=True)

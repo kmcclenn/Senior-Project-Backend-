@@ -29,6 +29,12 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     for user in models.AppUser.objects.all():
         Token.objects.get_or_create(user=user)# if user doesn't have token, create token.
 
+@receiver(post_save, sender=Address)
+def add_formatted_address(sender, insance=None, created=False, **kwargs):
+    for address in Address.objects.all():
+        address.formatted = address.raw
+       
+
 # @receiver(pre_save, sender = InputtedWaittime)
 # def add_foreign_keys(sender, instance=None, **kwargs):
 #     restaurant = Restaurant.objects.get(pk=instance.restaurant.id)
@@ -120,7 +126,7 @@ def address(request):
             locality.save()
             address.locality = locality
         address.save()
-    return Response({AddressSerializer(address).data})
+    return Response(AddressSerializer(address).data)
 
 
 @api_view(['GET'])
