@@ -13,9 +13,9 @@ pyjwt = "*"
 cryptography = "*"
 django-cors-headers = "*"
 drf-jwt = "*"
-python-decouple = "*"
 gunicorn = "*"
 whitenoise = "*"
+dj-database-url = "*"
 
 [dev-packages]
 
