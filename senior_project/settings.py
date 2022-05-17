@@ -35,7 +35,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 #SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'shrouded-savannah-80431.herokuapp.com']
 
@@ -137,8 +137,8 @@ DATABASES = {
         'PORT': '5432'
     }
 }
-# db_env = dj_database_url.config(conn_max_age = 600)
-# DATABASES['default'].update(db_env)
+db_env = dj_database_url.config(conn_max_age = 600)
+DATABASES['default'].update(db_env)
 
 
 # Password validation
