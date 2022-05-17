@@ -1,11 +1,11 @@
 from ctypes import addressof
 from wsgiref import validate
-from .models import Restaurant, AppUser, InputtedWaittime
-from address.models import Address, Locality
+from .models import Restaurant, AppUser, InputtedWaittime, RestaurantAddress
+#from address.models import Address, Locality
 from rest_framework import serializers
 
 class RestaurantSerializer(serializers.ModelSerializer):
-    address = serializers.SlugRelatedField(many=False, slug_field = 'raw', queryset=Address.objects.all())
+    address = serializers.SlugRelatedField(many=False, slug_field = 'raw', queryset=RestaurantAddress.objects.all())
     user_who_created = serializers.PrimaryKeyRelatedField(many=False, queryset=AppUser.objects.all(), default=None)
     class Meta:
         model = Restaurant
@@ -62,7 +62,15 @@ class AppUserSerializer(serializers.ModelSerializer):
         return user
 
 class AddressSerializer(serializers.ModelSerializer):
-    locality = serializers.StringRelatedField(many=False)
+    #locality = serializers.StringRelatedField(many=False)
     class Meta:
-        model = Address
-        fields = ['id', 'raw', 'street_number', 'route', 'locality']
+        model = RestaurantAddress
+        fields = ['id', 'raw', 'street', 'city', 'zip', 'state']
+    
+    def create(self, validated_data):
+        print("create run")
+
+        address, created = RestaurantAddress.objects.get_or_create(raw = validated_data["raw"], street = validated_data["street"], zip = validated_data["zip"], city = validated_data["city"], state = validated_data["state"])
+        #print("addres " + address)
+        address.save()
+        return address

@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from address.models import AddressField, Address
 from django.core.validators import RegexValidator
 from django.conf import settings
 from django.db.models.signals import post_save
@@ -13,9 +12,21 @@ class AppUser(AbstractUser):
     email = models.EmailField(unique=True)
 
 # Create your models here.
+class RestaurantAddress(models.Model):
+    raw = models.CharField(max_length=256)
+    street = models.CharField(max_length=128)
+    city = models.CharField(max_length=64)
+    state = models.CharField(max_length=64)
+    zip = models.IntegerField()
+    country = models.CharField(max_length=64, default="USA")
+
+    def __str__(self):
+        return self.raw
+
 class Restaurant(models.Model):
     name = models.CharField(max_length=64, unique=True)
-    address = AddressField(on_delete = models.CASCADE, default = None)
+    #address = AddressField(on_delete = models.CASCADE, default = None)
+    address = models.ForeignKey(RestaurantAddress, on_delete=models.SET_NULL, related_name = "property_owner", null=True)
     website = models.URLField(blank=True, null=True)
     yelp_page = models.URLField(blank=True, null=True)
     user_who_created = models.ForeignKey(AppUser, on_delete=models.SET_NULL, null=True, related_name="restaurantscreated")
@@ -37,7 +48,7 @@ class InputtedWaittime(models.Model):
     wait_length = models.IntegerField(null=True, blank=True) # either have direct wait length or sitting time minus arrival time
     reporting_user = models.ForeignKey(AppUser, on_delete=models.SET_NULL, null=True, related_name="inputs")
     accuracy = models.FloatField(default = 1)
-    point_value = models.IntegerField(default = 10)  
+    point_value = models.IntegerField(default=10)  
     post_time = models.DateTimeField(auto_now_add=True)
     arrival_time = models.DateTimeField(null=True, blank=True, default = timezone.now)
     seated_time = models.DateTimeField(null=True, blank=True)

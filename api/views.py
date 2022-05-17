@@ -4,13 +4,11 @@ from re import L
 from django.shortcuts import render
 #from api.models import InputtedWaittime, Restaurant, AppUser
 from . import models
-from address.models import Address, Locality, State, Country
-country = Country(name="USA")
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes, action
 from django.utils import timezone
 from rest_framework.response import Response
-from .serializer import RestaurantSerializer, AppUserSerializer, AddressSerializer, InputtedWaittimeSerializer
+from .serializer import RestaurantSerializer, AppUserSerializer, InputtedWaittimeSerializer, AddressSerializer
 # from functools import wraps
 # import jwt
 from django.http import JsonResponse
@@ -29,10 +27,10 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     for user in models.AppUser.objects.all():
         Token.objects.get_or_create(user=user)# if user doesn't have token, create token.
 
-@receiver(post_save, sender=Address)
-def add_formatted_address(sender, insance=None, created=False, **kwargs):
-    for address in Address.objects.all():
-        address.formatted = address.raw
+# @receiver(post_save, sender=Address)
+# def add_formatted_address(sender, insance=None, created=False, **kwargs):
+#     for address in Address.objects.all():
+#         address.formatted = address.raw
        
 
 # @receiver(pre_save, sender = InputtedWaittime)
@@ -113,20 +111,22 @@ def add_accuracy_and_points_and_waitlength(sender, instance=None, **kwargs):
     
      
 # FBVs - these will do the calcuations
-@api_view(['POST'])
-@permission_classes([permissions.IsAuthenticatedOrReadOnly])
-def address(request):
-    data = request.data
-    address, created = Address.objects.get_or_create(raw=data["raw"])
-    if created:
-        if data["city"] and data["zip"] and data["state"]:
-            state, state_created = State.objects.get_or_create(name=data["state"], country=country)
-            state.save()
-            locality, locality_created = Locality.objects.get_or_create(name=data["city"], postal_code=data["zip"])
-            locality.save()
-            address.locality = locality
-        address.save()
-    return Response(AddressSerializer(address).data)
+# @api_view(['POST'])
+# @permission_classes([permissions.IsAuthenticatedOrReadOnly])
+# def address(request):
+#     data = request.data
+#     print(data)
+#     address, created = models.AddressModel.objects.get_or_create(raw=data["raw"][0], street = data["street"][0], zip=data["zip"][0], city=data["city"][0], state=data["state"][0])
+#     print(address)
+#     # if created:
+#     #     if data["city"] and data["zip"] and data["state"]:
+#     #         state, state_created = State.objects.get_or_create(name=data["state"], country=country)
+#     #         state.save()
+#     #         locality, locality_created = Locality.objects.get_or_create(name=data["city"], postal_code=data["zip"])
+#     #         locality.save()
+#     #         address.locality = locality
+#     #     address.save()
+#     return Response(AddressSerializer(address).data)
 
 
 @api_view(['GET'])
@@ -203,6 +203,17 @@ class InputtedWaittimeViewSet(viewsets.ModelViewSet):
     queryset = models.InputtedWaittime.objects.all()
     serializer_class = InputtedWaittimeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class AddressViewSet(viewsets.ModelViewSet):
+    queryset = models.RestaurantAddress.objects.all()
+    serializer_class = AddressSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        #print(serializer.is_valid())
+        if serializer.is_valid():
+            print(serializer.validated_data)
+            serializer.create(serializer.validated_data)
 
     # @action(detail=True, methods=['post'])
     # def set_waittime(self, request, pk=None):
