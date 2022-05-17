@@ -14,6 +14,8 @@ cryptography = "*"
 django-cors-headers = "*"
 drf-jwt = "*"
 python-decouple = "*"
+gunicorn = "*"
+whitenoise = "*"
 
 [dev-packages]
 
