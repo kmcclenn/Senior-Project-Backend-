@@ -5,7 +5,7 @@ from django.shortcuts import render
 #from api.models import InputtedWaittime, Restaurant, AppUser
 from . import models
 from address.models import Address, Locality, State, Country
-country = Country.objects.get(name="USA")
+country = Country(name="USA")
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import api_view, permission_classes, action
 from django.utils import timezone
