@@ -18,15 +18,15 @@ import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-import dotenv # <- New
+#import dotenv # <- New
 
 # Add .env variables anywhere before SECRET_KEY
-dotenv_file = os.path.join(BASE_DIR, ".env")
-if os.path.isfile(dotenv_file):
-    dotenv.load_dotenv(dotenv_file)
+# dotenv_file = os.path.join(BASE_DIR, ".env")
+# if os.path.isfile(dotenv_file):
+#     dotenv.load_dotenv(dotenv_file)
 
 # UPDATE secret key
-SECRET_KEY = os.environ['SECRET_KEY']
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
