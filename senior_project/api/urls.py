@@ -15,6 +15,6 @@ urlpatterns = [
     path("get_credibility/<int:user_id>", views.return_credibility, name="get_credibility"),
     path('api-auth/', include('rest_framework.urls')),
     path('address/', views.address, name="address"),
-    path('user_points', views.user_points, name="user_points"),
+    path('user_points/<int:days_ago>', views.user_points, name="user_points"),
     path('api-token-auth/', views.CustomAuthToken.as_view())
 ]

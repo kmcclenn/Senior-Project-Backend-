@@ -80,3 +80,18 @@ def get_average_wait_time(restaurant_id): ## need to make weighted average
         average_wait_times += (weight * pair[0])
     
     return [average_wait_times / 60, wait_lengths] # to put it back in minutes
+
+
+# def get_restaurant_queryset():
+#     restaurants = Restaurant.objects.filter(is_approved = True)
+#     restaurant_wait_time_list = []
+#     for restaurant in restaurants:
+#         wait_time = get_average_wait_time(restaurant.id)
+#         if wait_time == None:
+#             wait_time = 10000 ## high number
+#         restaurant_wait_time_list.append([restaurant, wait_time])
+#     restaurant_wait_time_list.sort(key=lambda item: item[1])
+#     queryset_list = []
+#     for item in restaurant_wait_time_list:
+#         queryset_list.append(item[0])
+#     return queryset_list

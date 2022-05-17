@@ -131,14 +131,31 @@ def address(request):
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def user_points(request):
+def user_points(request, days_ago):
+
+    if days_ago == 0:
+        seconds_ago = None
+    else:
+        seconds_ago = days_ago * 86400
+    
+
+    #((timezone.now() - most_recent_time).total_seconds() < relevant_history_seconds
+
     active_users = models.AppUser.objects.filter(is_active = True)
     user_and_points = []
     for user in active_users:
         reported_wts = models.InputtedWaittime.objects.filter(reporting_user = user)
         total_points = 0
         for wt in reported_wts:
-            total_points += wt.point_value
+            if wt.arrival_time is not None:
+                most_recent_time = wt.arrival_time
+            else:
+                most_recent_time = wt.post_time
+
+            if seconds_ago is not None and (timezone.now() - most_recent_time).total_seconds() < seconds_ago:
+                total_points += wt.point_value
+            elif seconds_ago is None:
+                total_points += wt.point_value
         user_and_points.append({'id': user.id, 'points': total_points})
     if len(user_and_points) != 0:
         user_and_points = sorted(user_and_points, reverse = True, key=lambda item: item['points'])
