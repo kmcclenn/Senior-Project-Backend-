@@ -216,7 +216,7 @@ class AddressViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         #print(serializer.is_valid())
         if serializer.is_valid():
-            print(serializer.validated_data)
+            #print(serializer.validated_data)
             serializer.create(serializer.validated_data)
 
     # @action(detail=True, methods=['post'])
