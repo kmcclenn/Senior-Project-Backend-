@@ -3,6 +3,8 @@ from wsgiref import validate
 from .models import Restaurant, AppUser, InputtedWaittime, RestaurantAddress
 #from address.models import Address, Locality
 from rest_framework import serializers
+from . import utils
+from rest_framework.response import Response
 
 class RestaurantSerializer(serializers.ModelSerializer):
     address = serializers.SlugRelatedField(many=False, slug_field = 'raw', queryset=RestaurantAddress.objects.all())
@@ -36,6 +38,33 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
         depth = 1 # makes the restaurant and reporting user foreign keys actually represented instead of just their pks
         read_only_fields = ('id','accuracy','point_value','post_time')
 
+    def create(self, validated_data):
+        user = AppUser.objects.get(pk=validated_data['reporting_user'])
+        user_inputs = InputtedWaittime.objects.filter(reporting_user = user)
+        timely_user_inputs = []
+        for input in user_inputs:
+            if input.arrival_time is not None:
+                most_recent_time = input.arrival_time
+            else:
+                most_recent_time = input.post_time
+            timely_user_inputs.append([input, most_recent_time])
+        timely_user_inputs.sort(key=lambda item: item[1]) # not sure if this sorting is in the right direction
+
+        if validated_data['arrival_time'] is not None:
+            input_recent_time = validated_data['arrival_time']
+        else:
+            input_recent_time = validated_data['post_time']
+        if (input_recent_time - timely_user_inputs[0][1]).total_seconds() < utils.relevant_history * 60:
+            inputted_waittime = InputtedWaittime(restaurant=validated_data['restaurant'],
+                    wait_length=validated_data['wait_length'],
+                    reporting_user=validated_data['reporting_user'],
+                    arrival_time=validated_data['arrival_time'],
+                    seated_time=['seated_time'])
+            inputted_waittime.save()
+            return inputted_waittime
+        else:
+            return Response({'error': f'already inputted time within past {utils.relevant_history} minutes'})
+        
     # def to_representation(self, value):
     #     self.fields['restaurant'] =  RestaurantSerializer()
     #     self.fields['reporting_user'] = AppUserSerializer()
