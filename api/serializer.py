@@ -41,7 +41,7 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = AppUser.objects.get(pk=validated_data['reporting_user'].id)
-        user_inputs = InputtedWaittime.objects.filter(reporting_user = user)
+        user_inputs = InputtedWaittime.objects.filter(reporting_user = user).filter(restaurant = validated_data['restaurant'])
         timely_user_inputs = []
         for input in user_inputs:
             if input.arrival_time is not None:
