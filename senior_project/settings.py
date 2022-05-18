@@ -35,7 +35,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 #SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1', '0.0.0.0', 'shrouded-savannah-80431.herokuapp.com']
 

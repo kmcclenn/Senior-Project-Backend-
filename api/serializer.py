@@ -53,9 +53,9 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
         print(timely_user_inputs)
         timely_user_inputs.sort(key=lambda item: item[1], reverse=True) # not sure if this sorting is in the right direction
 
-        if validated_data['arrival_time'] is not None:
+        try:
             input_recent_time = validated_data['arrival_time']
-        else:
+        except KeyError:
             input_recent_time = timezone.now()
         
         if len(timely_user_inputs) == 0:
@@ -74,10 +74,15 @@ def return_inputted_waittime(validated_data):
     inputted_waittime = InputtedWaittime(restaurant=validated_data['restaurant'],
                     wait_length=validated_data['wait_length'],
                     reporting_user=validated_data['reporting_user'])
-    if validated_data['arrival_time']:
+
+    try:
         inputted_waittime.arrival_time = validated_data['arrival_time']
-    if validated_data['seated_time']:
+    except KeyError:
+        pass
+    try:
         inputted_waittime.seated_time = validated_data['seated_time']
+    except KeyError:
+        pass
     inputted_waittime.save()
     return inputted_waittime
     # def to_representation(self, value):
