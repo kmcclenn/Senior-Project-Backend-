@@ -71,8 +71,13 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
         
 def return_inputted_waittime(validated_data):
     
+    if validated_data['wait_length'] is None:
+        wait_length = (validated_data['seated_time'] - validated_data['arrival_time']).total_seconds() / 60
+    else:
+        wait_length - validated_data['wait_length']
+
     inputted_waittime = InputtedWaittime(restaurant=validated_data['restaurant'],
-                    wait_length=validated_data['wait_length'],
+                    wait_length=wait_length,
                     reporting_user=validated_data['reporting_user'])
 
     try:
