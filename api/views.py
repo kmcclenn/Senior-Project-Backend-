@@ -162,7 +162,7 @@ def user_points(request, days_ago):
     return Response(user_and_points)
 
 @api_view(['GET'])
-@permission_classes([permissions.IsOwner])
+@permission_classes([utils.IsOwner])
 def return_credibility(request, user_id):
     credibility = utils.get_credibility(user_id)
     return Response({'id': user_id, 'credibility': credibility})
