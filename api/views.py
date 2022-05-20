@@ -211,7 +211,7 @@ class InputtedWaittimeViewSet(viewsets.ModelViewSet):
 class AddressViewSet(viewsets.ModelViewSet):
     queryset = models.RestaurantAddress.objects.all()
     serializer_class = AddressSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.MustBeAdminToChange]
 
     def perform_create(self, serializer):
         #print(serializer.is_valid())

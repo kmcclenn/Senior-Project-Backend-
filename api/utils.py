@@ -27,6 +27,14 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         return obj.id == request.user.id ## if both are none, then it works too - so works when creating new user.
 
+class MustBeAdminToChange(permissions.IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if request.method == "PUT" and request.user.is_staff:
+            return True
+        return super().has_object_permission(self, request, view, obj)
+
 def get_credibility(user_id):
     reporting_user = AppUser.objects.get(id = user_id)
 
