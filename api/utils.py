@@ -31,9 +31,17 @@ class MustBeAdminToChange(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        if request.method == "PUT" and request.user.is_staff:
-            return True
+        if request.method == "PUT":
+            if request.user.is_staff:
+                return True
+            else:
+                return False
         return request.user.is_authenticated
+
+
+class IsOwner(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.id == view.user_id
 
 def get_credibility(user_id):
     reporting_user = AppUser.objects.get(id = user_id)
