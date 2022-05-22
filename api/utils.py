@@ -39,14 +39,9 @@ class MustBeAdminToChange(permissions.BasePermission):
         return request.user.is_authenticated
 
 
-# class IsOwner(permissions.BasePermission):
-#     user_id = -1
-#     def __init__(self, user_id):
-#         self.user_id = user_id
-#     def __call__(self):
-#         return self
-#     def has_permission(self, request, view):
-#         return request.user.id == self.user_id
+class IsOwner(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.id == view.kwargs['user_id']
 
 def get_credibility(user_id):
     reporting_user = AppUser.objects.get(id = user_id)
