@@ -70,11 +70,12 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
             #return Response({'error': f'already inputted time within past {utils.relevant_history} minutes'})
         
 def return_inputted_waittime(validated_data):
-    
-    if validated_data['wait_length'] is None:
-        wait_length = (validated_data['seated_time'] - validated_data['arrival_time']).total_seconds() / 60
-    else:
+        
+
+    try:
         wait_length = validated_data['wait_length']
+    except KeyError:
+        wait_length = (validated_data['seated_time'] - validated_data['arrival_time']).total_seconds() / 60
 
     inputted_waittime = InputtedWaittime(restaurant=validated_data['restaurant'],
                     wait_length=wait_length,

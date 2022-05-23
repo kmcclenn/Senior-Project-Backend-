@@ -55,41 +55,36 @@ def get_credibility(user_id):
         credibility = sum(accuracies)/len(accuracies)
     return credibility
 
-def get_average_wait_time(restaurant_id): ## need to make weighted average
+def get_average_wait_time(restaurant_id):
     relevant_history_seconds = relevant_history*60
-    restaurant = Restaurant.objects.get(id=restaurant_id)
-    ##restaurant_serializer = RestaurantSerializer(restaurant)
-    restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=restaurant)
+    restaurant = Restaurant.objects.get(id=restaurant_id) # gets restaurant object
+    restaurant_wait_time_inputs = InputtedWaittime.objects.filter(restaurant=restaurant) # gets inputs for restaurant
 
     wait_lengths = []
     average_wait_times = None
-    for input in restaurant_wait_time_inputs:
+    for input in restaurant_wait_time_inputs: # loops through inputs to find the ones within relevant history
         if input.arrival_time is not None:
             most_recent_time = input.arrival_time
         else:
             most_recent_time = input.post_time
         
+        # if the input is in relevant history, add it and the users credibility to a list
         if ((timezone.now() - most_recent_time).total_seconds() < relevant_history_seconds):
-            
-
             credibility = get_credibility(input.reporting_user.id)
-
             if input.wait_length is not None:
                 wait_lengths.append([float(input.wait_length) * 60, credibility])
-            # elif input.seated_time is not None and input.arrival_time is not None:
-            #     wait_length = input.seated_time - input.arrival_time
-            #     wait_length_in_s = wait_length.total_seconds()
-            #     wait_lengths.append([float(wait_length_in_s), credibility])
             else:
                 return None
 
     if len(wait_lengths) == 0:
         return None
 
+    # find total credibility for weighted average
     total_credibility = 0
     for pair in wait_lengths:
         total_credibility += pair[1]
 
+    # loop through wait lengths and find weighted average of weight lengths based on their user's credibility
     average_wait_times = 0
     for pair in wait_lengths:
         weight = pair[1]/total_credibility

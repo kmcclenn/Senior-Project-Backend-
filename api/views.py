@@ -111,22 +111,6 @@ def add_accuracy_and_points_and_waitlength(sender, instance=None, **kwargs):
     
      
 # FBVs - these will do the calcuations
-# @api_view(['POST'])
-# @permission_classes([permissions.IsAuthenticatedOrReadOnly])
-# def address(request):
-#     data = request.data
-#     print(data)
-#     address, created = models.AddressModel.objects.get_or_create(raw=data["raw"][0], street = data["street"][0], zip=data["zip"][0], city=data["city"][0], state=data["state"][0])
-#     print(address)
-#     # if created:
-#     #     if data["city"] and data["zip"] and data["state"]:
-#     #         state, state_created = State.objects.get_or_create(name=data["state"], country=country)
-#     #         state.save()
-#     #         locality, locality_created = Locality.objects.get_or_create(name=data["city"], postal_code=data["zip"])
-#     #         locality.save()
-#     #         address.locality = locality
-#     #     address.save()
-#     return Response(AddressSerializer(address).data)
 
 
 @api_view(['GET'])
@@ -137,9 +121,7 @@ def user_points(request, days_ago):
         seconds_ago = None
     else:
         seconds_ago = days_ago * 86400
-    
 
-    #((timezone.now() - most_recent_time).total_seconds() < relevant_history_seconds
 
     active_users = models.AppUser.objects.filter(is_active = True)
     user_and_points = []
