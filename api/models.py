@@ -34,7 +34,7 @@ class Restaurant(models.Model):
     phone_number = models.CharField(validators = [phoneNumberRegex], max_length = 16, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_time = models.DateTimeField(auto_now_add=True)
-    logo_url = models.Charfield(blank=True, null=True)
+    logo_url = models.CharField(blank=True, null=True)
     is_approved = models.BooleanField(default=False)
 
     def __str__(self): 
