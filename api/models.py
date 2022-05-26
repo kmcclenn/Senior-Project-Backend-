@@ -25,7 +25,6 @@ class RestaurantAddress(models.Model):
 
 class Restaurant(models.Model):
     name = models.CharField(max_length=64, unique=True)
-    #address = AddressField(on_delete = models.CASCADE, default = None)
     address = models.ForeignKey(RestaurantAddress, on_delete=models.SET_NULL, related_name = "property_owner", null=True)
     website = models.URLField(blank=True, null=True)
     yelp_page = models.URLField(blank=True, null=True)

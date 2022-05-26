@@ -14,21 +14,6 @@ class RestaurantSerializer(serializers.ModelSerializer):
         model = Restaurant
         fields = ['id', 'name', 'address', 'website', 'yelp_page', 'phone_number', 'user_who_created', 'is_active', 'created_time', 'logo_url']
 
-    # def create(self, validated_data):
-    #     print(validated_data)
-    #     address = Address(
-    #         raw=validated_data['address'],
-    #     )
-    #     restaurant = Restaurant(
-    #         name = validated_data['name'],
-    #         address = address,
-    #         website = validated_data['website'],
-    #         yelp_page = validated_data['yelp_page'],
-    #         phone_number = validated_data['phone_number'],
-    #         user_who_created = validated_data['user_who_created']
-    #     )
-    #     restaurant.save()
-    #     return restaurant
 
 class InputtedWaittimeSerializer(serializers.ModelSerializer):
     restaurant = serializers.PrimaryKeyRelatedField(many=False, queryset=Restaurant.objects.all(), default=None)
@@ -39,6 +24,7 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
         depth = 1 # makes the restaurant and reporting user foreign keys actually represented instead of just their pks
         read_only_fields = ('id','accuracy','point_value','post_time')
 
+    ## makes sure one user cannot input more than once every 30 mins
     def create(self, validated_data):
         user = AppUser.objects.get(pk=validated_data['reporting_user'].id)
         user_inputs = InputtedWaittime.objects.filter(reporting_user = user).filter(restaurant = validated_data['restaurant'])
@@ -51,7 +37,8 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
             timely_user_inputs.append([input, most_recent_time])
         print("pre-sorted: ")
         print(timely_user_inputs)
-        timely_user_inputs.sort(key=lambda item: item[1], reverse=True) # not sure if this sorting is in the right direction
+        # creates list of inputs and when it was posted and sorts it according to post time
+        timely_user_inputs.sort(key=lambda item: item[1], reverse=True) 
 
         try:
             input_recent_time = validated_data['arrival_time']
@@ -62,15 +49,18 @@ class InputtedWaittimeSerializer(serializers.ModelSerializer):
             return return_inputted_waittime(validated_data)
         
         print((input_recent_time - timely_user_inputs[0][1]).total_seconds()/60)
+        # if the current time minus the previous post time is greater than 30 mins
+        # then allow
+        # otherwise, raise error
         if (input_recent_time - timely_user_inputs[0][1]).total_seconds() > utils.relevant_history * 60:
             
             return return_inputted_waittime(validated_data)
         else:
             raise serializers.ValidationError("wait to input new time")
             #return Response({'error': f'already inputted time within past {utils.relevant_history} minutes'})
-        
+
+# generic function for returning an inputted wait time object   
 def return_inputted_waittime(validated_data):
-        
 
     try:
         wait_length = validated_data['wait_length']
@@ -91,10 +81,7 @@ def return_inputted_waittime(validated_data):
         pass
     inputted_waittime.save()
     return inputted_waittime
-    # def to_representation(self, value):
-    #     self.fields['restaurant'] =  RestaurantSerializer()
-    #     self.fields['reporting_user'] = AppUserSerializer()
-    #     return super().to_representation(value)
+
 
 class AppUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -107,6 +94,7 @@ class AppUserSerializer(serializers.ModelSerializer):
                 }
             }
 
+    # creates user and sets password
     def create(self, validated_data):
         user = AppUser(
             email=validated_data['email'],
@@ -117,15 +105,13 @@ class AppUserSerializer(serializers.ModelSerializer):
         return user
 
 class AddressSerializer(serializers.ModelSerializer):
-    #locality = serializers.StringRelatedField(many=False)
     class Meta:
         model = RestaurantAddress
         fields = ['id', 'raw', 'street', 'city', 'zip', 'state']
     
+    # creates address unless already exists
     def create(self, validated_data):
         print("create run")
-
         address, created = RestaurantAddress.objects.get_or_create(raw = validated_data["raw"], street = validated_data["street"], zip = validated_data["zip"], city = validated_data["city"], state = validated_data["state"])
-        #print("addres " + address)
         address.save()
         return address

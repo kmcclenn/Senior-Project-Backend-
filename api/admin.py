@@ -7,7 +7,7 @@ from django import forms
 admin.site.register(AppUser)
 admin.site.register(InputtedWaittime)
 admin.site.register(RestaurantAddress)
-#admin.site.register(Restaurant)
+
 
 class RestaurantModel(Restaurant):
 
@@ -17,13 +17,7 @@ class RestaurantModel(Restaurant):
 class AddressForm(forms.ModelForm):
     addresses = RestaurantAddress.objects.all()
     
-        #convert addresses to tuple.
-    #CHOICES = [(item.route, item) for item in addresses]
-    
     address = forms.ModelChoiceField(queryset=addresses)
-
-#admin.site.register(Address)
-
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):

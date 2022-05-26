@@ -7,6 +7,7 @@ relevant_history = 30 # minutes
 point_scale = 10
 time_constant = 0.17
 
+# custom permission
 class IsAdminOrReadOnly(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
@@ -17,7 +18,7 @@ class IsAdminOrReadOnly(permissions.BasePermission):
 
         return request.user.is_staff
 
-
+# custom permission
 class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Read permissions are allowed to any request,
@@ -27,6 +28,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         return obj.id == request.user.id ## if both are none, then it works too - so works when creating new user.
 
+# custom permission that allows anything if authenticated unless method is post, then must be admin
 class MustBeAdminToChange(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
@@ -38,11 +40,12 @@ class MustBeAdminToChange(permissions.BasePermission):
                 return False
         return request.user.is_authenticated
 
-
+# custom permission
 class IsOwner(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.id == view.kwargs['user_id']
 
+ # returns credibility of each user based on their input history
 def get_credibility(user_id):
     reporting_user = AppUser.objects.get(id = user_id)
 
@@ -52,9 +55,10 @@ def get_credibility(user_id):
     if len(accuracies) == 0:
         credibility = 1
     else:
-        credibility = sum(accuracies)/len(accuracies)
+        credibility = sum(accuracies)/len(accuracies) # average of accuracies
     return credibility
 
+# gets average weight time using weighted average
 def get_average_wait_time(restaurant_id):
     relevant_history_seconds = relevant_history*60
     restaurant = Restaurant.objects.get(id=restaurant_id) # gets restaurant object
@@ -91,18 +95,3 @@ def get_average_wait_time(restaurant_id):
         average_wait_times += (weight * pair[0])
     
     return [average_wait_times / 60, wait_lengths] # to put it back in minutes
-
-
-# def get_restaurant_queryset():
-#     restaurants = Restaurant.objects.filter(is_approved = True)
-#     restaurant_wait_time_list = []
-#     for restaurant in restaurants:
-#         wait_time = get_average_wait_time(restaurant.id)
-#         if wait_time == None:
-#             wait_time = 10000 ## high number
-#         restaurant_wait_time_list.append([restaurant, wait_time])
-#     restaurant_wait_time_list.sort(key=lambda item: item[1])
-#     queryset_list = []
-#     for item in restaurant_wait_time_list:
-#         queryset_list.append(item[0])
-#     return queryset_list
